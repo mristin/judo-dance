@@ -2,7 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d01fca27-c05a-4cb7-93a0-82d13d73ee11" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/judodance/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/judodance/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/workflows/release-package.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/package_and_release.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/judo-dance.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/judo-dance.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.rst" beforeDir="false" afterPath="$PROJECT_DIR$/README.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,13 +33,24 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/Users/rist/workspace/mristin/judo-dance"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/rist/workspace/mristin/judo-dance/judodance/media/tasks/uki-goshi-rechts&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
-}]]></component>
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\rist\workspace\mristin\judo-dance\judodance\media\tasks\uki-goshi-rechts" />
+      <recent name="C:\Users\rist\workspace\mristin\judo-dance\judodance\media\tasks\osoto-otoshi-links" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\rist\workspace\mristin\judo-dance\judodance\media\tasks\osoto-otoshi-rechts" />
+      <recent name="C:\Users\rist\workspace\mristin\judo-dance\judodance" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration name="precommit overwrite" type="PythonConfigurationType" factoryName="Python">
       <module name="judo-dance" />
