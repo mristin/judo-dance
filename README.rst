@@ -66,6 +66,15 @@ For example:
 
     judo-dance -joystick 03000000790000001100000000000000
 
+Which dance mat to use?
+=======================
+We used an unbranded dance mat which you can order, say, from Amazon:
+https://www.amazon.com/OSTENT-Non-Slip-Dancing-Dance-Compatible-PC/dp/B00FJ2KT8M
+
+Please let us know by `creating an issue`_ if you tested the game with other mats!
+
+.. _creating an issue: https://github.com/mristin/judo-dance/issues/new
+
 Acknowledgments
 ===============
 The pictures illustrating the techniques are taken from the book we use for the exams.
