@@ -2,13 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d01fca27-c05a-4cb7-93a0-82d13d73ee11" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.github/workflows/release-package.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.github/workflows/package_and_release.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/judo-dance.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/judo-dance.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.rst" beforeDir="false" afterPath="$PROJECT_DIR$/README.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/release-package.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/release-package.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
