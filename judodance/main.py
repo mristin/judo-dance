@@ -375,7 +375,10 @@ def main(prog: str) -> int:
     surface = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 
     task_database = create_task_database()
-    check_all_files_exist(task_database)
+    error = check_all_files_exist(task_database)
+    if error is not None:
+        print(error, file=sys.stderr)
+        return 1
 
     state = State(initial_task=random.choice(task_database.tasks))
 
