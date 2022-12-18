@@ -75,14 +75,25 @@ class TaskDatabase:
 # noinspection SpellCheckingInspection
 def create_task_database() -> TaskDatabase:
     """Initialize the task database."""
-    tai_otoshi = Task(
-        expected_position=pathlib.Path("media/tasks/tai_otoshi/keypad.png"),
-        announcement=pathlib.Path("media/tasks/tai_otoshi/announcement.ogg"),
+    tai_otoshi_rechts = Task(
+        expected_position=pathlib.Path("media/tasks/tai_otoshi_rechts/keypad.png"),
+        announcement=pathlib.Path("media/tasks/tai_otoshi_rechts/announcement.ogg"),
         expected_buttons={
             judodance.actions.Button.CROSS,
             judodance.actions.Button.CIRCLE,
         },
-        picture=pathlib.Path("media/tasks/tai_otoshi/picture.png"),
+        picture=pathlib.Path("media/tasks/tai_otoshi_rechts/picture.png"),
+        score_delta=1,
+    )
+
+    tai_otoshi_links = Task(
+        expected_position=pathlib.Path("media/tasks/tai_otoshi_links/keypad.png"),
+        announcement=pathlib.Path("media/tasks/tai_otoshi_links/announcement.ogg"),
+        expected_buttons={
+            judodance.actions.Button.CROSS,
+            judodance.actions.Button.CIRCLE,
+        },
+        picture=pathlib.Path("media/tasks/tai_otoshi_links/picture.png"),
         score_delta=1,
     )
 
@@ -128,7 +139,8 @@ def create_task_database() -> TaskDatabase:
 
     return TaskDatabase(
         [
-            tai_otoshi,
+            tai_otoshi_rechts,
+            tai_otoshi_links,
             uki_goshi_rechts,
             uki_goshi_links,
             osoto_otoshi_rechts,
