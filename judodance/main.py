@@ -65,11 +65,18 @@ class TaskDatabase:
     #: The "idle" task, *i.e.*, "go back to field 1"
     cool_down: Task
 
+    #: Relative path to the accomplishment sound
+    accomplishment: Final[pathlib.Path]
+
     @require(lambda tasks, cool_down: cool_down not in tasks)
-    def __init__(self, tasks: List[Task], cool_down: Task) -> None:
+    @require(lambda accomplishment: not accomplishment.is_absolute())
+    def __init__(
+        self, tasks: List[Task], cool_down: Task, accomplishment: pathlib.Path
+    ) -> None:
         """Initialize with the given values."""
         self.tasks = tasks
         self.cool_down = cool_down
+        self.accomplishment = accomplishment
 
 
 # noinspection SpellCheckingInspection
@@ -147,6 +154,7 @@ def create_task_database() -> TaskDatabase:
             osoto_otoshi_links,
         ],
         cool_down=cool_down,
+        accomplishment=pathlib.Path("media/tasks/accomplishment.ogg"),
     )
 
 
@@ -154,7 +162,9 @@ def check_all_files_exist(task_database: TaskDatabase) -> Optional[str]:
     """Check that all files exist, and return an error, if any."""
     package_dir = importlib.resources.files(__package__)
 
-    pths = []  # type: List[str]
+    pths = [
+        str(package_dir.joinpath(str(task_database.accomplishment)))
+    ]  # type: List[str]
 
     for task in task_database.tasks + [task_database.cool_down]:
         pths.append(str(package_dir.joinpath(str(task.announcement))))
@@ -186,6 +196,9 @@ class State:
     #: Currently pressed buttons
     active_buttons: Set[judodance.actions.Button]
 
+    #: Seconds since epoch when the task will be accomplished and the next task picked
+    accomplished: Optional[float]
+
     def __init__(self, initial_task: Task) -> None:
         """Initialize with the default values."""
         self.received_quit = False
@@ -193,28 +206,19 @@ class State:
         self.announced = None
         self.reminded = None
         self.active_buttons = set()
+        self.accomplished = None
 
         self.score = 0
 
 
-def play_announcement(task: Task) -> None:
-    """Play the announcement for the given task."""
-    pygame.mixer.music.load(
-        str(importlib.resources.files(__package__).joinpath(str(task.announcement)))
+@require(lambda path: not path.is_absolute())
+def play_sound(path: pathlib.Path) -> float:
+    """Start playing the sound and returns its length."""
+    sound = pygame.mixer.Sound(
+        str(importlib.resources.files(__package__).joinpath(str(path)))
     )
-    pygame.mixer.music.play()
-
-
-def pick_next_task(state: State, task_database: TaskDatabase) -> None:
-    """Proceed to the next task and update the state accordingly."""
-    if state.task is task_database.cool_down:
-        state.task = random.choice(task_database.tasks)
-    else:
-        state.score += state.task.score_delta
-        state.task = task_database.cool_down
-
-    state.announced = None
-    state.reminded = None
+    sound.play()
+    return sound.get_length()
 
 
 def handle(
@@ -230,25 +234,39 @@ def handle(
         # NOTE (mristin, 2022-12-16):
         # We use the tick action to handle all the side effects.
 
-        if state.active_buttons == state.task.expected_buttons:
-            # NOTE (mristin, 2022-12-17):
-            # We fulfilled the task, pick the next one.
-            pick_next_task(state, task_database)
-
         now = time.time()
 
-        if state.announced is None:
-            play_announcement(state.task)
+        if state.active_buttons == state.task.expected_buttons:
+            if state.accomplished is None:
+                if state.task is not task_database.cool_down:
+                    state.accomplished = now + play_sound(task_database.accomplishment)
+                else:
+                    state.accomplished = now
+
+        if state.accomplished is not None and now >= state.accomplished:
+            # Pick the next task
+            if state.task is task_database.cool_down:
+                state.task = random.choice(task_database.tasks)
+            else:
+                state.score += state.task.score_delta
+                state.task = task_database.cool_down
+
+            state.announced = None
+            state.reminded = None
+            state.accomplished = None
+
+        elif state.announced is None:
+            play_sound(state.task.announcement)
             state.announced = now
         else:
             slack = 5  # in seconds
             if state.reminded is None:
                 if now - state.announced > slack:
-                    play_announcement(state.task)
+                    play_sound(state.task.announcement)
                     state.reminded = now
             else:
                 if now - state.reminded > slack:
-                    play_announcement(state.task)
+                    play_sound(state.task.announcement)
                     state.reminded = now
     else:
         assert_never(action)
