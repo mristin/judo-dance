@@ -128,7 +128,7 @@ def create_task_database() -> TaskDatabase:
     osoto_otoshi_rechts = Task(
         expected_position=pathlib.Path("media/tasks/osoto_otoshi_rechts/keypad.png"),
         announcement=pathlib.Path("media/tasks/osoto_otoshi_rechts/announcement.ogg"),
-        expected_buttons={judodance.events.Button.UP, judodance.events.Button.CIRCLE},
+        expected_buttons={judodance.events.Button.UP, judodance.events.Button.CROSS},
         picture=pathlib.Path("media/tasks/osoto_otoshi_rechts/picture.png"),
         score_delta=1,
     )
@@ -136,7 +136,7 @@ def create_task_database() -> TaskDatabase:
     osoto_otoshi_links = Task(
         expected_position=pathlib.Path("media/tasks/osoto_otoshi_links/keypad.png"),
         announcement=pathlib.Path("media/tasks/osoto_otoshi_links/announcement.ogg"),
-        expected_buttons={judodance.events.Button.UP, judodance.events.Button.CROSS},
+        expected_buttons={judodance.events.Button.UP, judodance.events.Button.CIRCLE},
         picture=pathlib.Path("media/tasks/osoto_otoshi_links/picture.png"),
         score_delta=1,
     )
@@ -308,8 +308,10 @@ def handle(
 
 
 @require(lambda percentage: 0 <= percentage <= 1)
-def rescale_image_relative_to_surface(
-    image: pygame.surface.Surface, percentage: float, surface: pygame.surface.Surface
+def rescale_image_relative_to_surface_width(
+    image: pygame.surface.Surface,
+        percentage: float,
+        surface: pygame.surface.Surface
 ) -> pygame.surface.Surface:
     """Rescale the image as a percentage of the ``surface`` size."""
     surface_width = surface.get_width()
@@ -324,6 +326,25 @@ def rescale_image_relative_to_surface(
     return pygame.transform.scale(image, (new_image_width, new_image_height))
 
 
+@require(lambda percentage: 0 <= percentage <= 1)
+def rescale_image_relative_to_surface_height(
+    image: pygame.surface.Surface,
+        percentage: float,
+        surface: pygame.surface.Surface
+) -> pygame.surface.Surface:
+    """Rescale the image as a percentage of the ``surface`` size."""
+    surface_width = surface.get_width()
+
+    image_rect = image.get_rect()
+    image_width = image_rect.width
+    image_height = image_rect.height
+
+    new_image_height =int(surface.get_height() * percentage)
+    new_image_width = int(image_width * (new_image_height / image_height))
+
+    return pygame.transform.scale(image, (new_image_width, new_image_height))
+
+
 def render(state: State, surface: pygame.surface.Surface) -> None:
     """Render the game on the screen."""
     package_dir = importlib.resources.files(__package__)
@@ -333,12 +354,16 @@ def render(state: State, surface: pygame.surface.Surface) -> None:
     position = pygame.image.load(
         str(package_dir.joinpath(str(state.task.expected_position)))
     )
-    position = rescale_image_relative_to_surface(position, 0.4, surface)
+    position = rescale_image_relative_to_surface_width(position, 0.4, surface)
 
     surface.blit(position, (10, 10))
 
     picture = pygame.image.load(str(package_dir.joinpath(str(state.task.picture))))
-    picture = rescale_image_relative_to_surface(picture, 0.5, surface)
+
+    if picture.get_height() > picture.get_width():
+        picture = rescale_image_relative_to_surface_height(picture, 0.7, surface)
+    else:
+        picture = rescale_image_relative_to_surface_width(picture, 0.4, surface)
 
     surface.blit(picture, (position.get_width() + 60, 10))
 
@@ -347,6 +372,7 @@ def render(state: State, surface: pygame.surface.Surface) -> None:
     score = font_large.render(f"Score: {state.score}", True, (255, 255, 255))
     surface.blit(score, (position.get_width() + 60, picture.get_height() + 60))
 
+    # noinspection SpellCheckingInspection
     font_small = pygame.font.Font("freesansbold.ttf", 32)
     escape = font_small.render('Press ESC or "q" to quit', True, (255, 255, 255))
     surface.blit(
