@@ -49,7 +49,7 @@ jobs:
 
     - name: Package the release
       run: |
-        pyinstaller.exe .\judodance\main.py --add-data "judodance;."
+        pyinstaller.exe .\judodance\main.py --name judo-dance --add-data "judodance;."
         cd dist
         Compress-Archive -Path judo-dance judo-dance.${{ steps.inferVersion.outputs.version }}.win-x64.zip
 
