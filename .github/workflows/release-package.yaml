@@ -41,7 +41,7 @@ jobs:
 
     - uses: actions/setup-python@v2
       with:
-        python-version: '3.10'
+        python-version: '3.9'
         architecture: 'x64'
 
     - name: Install dependencies
@@ -49,11 +49,13 @@ jobs:
 
     - name: Package the release
       run: |
-        python setup.py sdist
+        pyinstaller.exe .\judodance\main.py --add-data "judodance;."
+        cd dist
+        Compress-Archive -Path judo-dance judo-dance.${{ steps.inferVersion.outputs.version }}.win-x64.zip
 
     - name: Upload the release assets
       uses: AButler/upload-release-assets@v2.0
       with:
-        files: "dist/judo-dance-${{ steps.inferVersion.outputs.version }}.tar.gz"
+        files: "dist/judo-dance.${{ steps.inferVersion.outputs.version }}.win-x64.zip"
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         release-tag: "v${{ steps.inferVersion.outputs.version }}"

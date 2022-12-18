@@ -17,6 +17,12 @@ from judodance.common import assert_never
 
 assert judodance.__doc__ == __doc__
 
+PACKAGE_DIR = (
+    pathlib.Path(str(importlib.resources.files(__package__)))
+    if __package__ is not None
+    else pathlib.Path(os.path.realpath(__file__)).parent
+)
+
 
 class Task:
     """Represent a game task to be accomplished."""
@@ -165,19 +171,15 @@ def create_task_database() -> TaskDatabase:
 
 def check_all_files_exist(task_database: TaskDatabase) -> Optional[str]:
     """Check that all files exist, and return an error, if any."""
-    package_dir = importlib.resources.files(__package__)
-
-    pths = [
-        str(package_dir.joinpath(str(task_database.accomplishment)))
-    ]  # type: List[str]
+    pths = [PACKAGE_DIR / task_database.accomplishment]  # type: List[pathlib.Path]
 
     for task in task_database.tasks + [task_database.cool_down]:
-        pths.append(str(package_dir.joinpath(str(task.announcement))))
-        pths.append(str(package_dir.joinpath(str(task.expected_position))))
-        pths.append(str(package_dir.joinpath(str(task.picture))))
+        pths.append(PACKAGE_DIR / task.announcement)
+        pths.append(PACKAGE_DIR / task.expected_position)
+        pths.append(PACKAGE_DIR / task.picture)
 
     for pth in pths:
-        if not os.path.exists(pth):
+        if not pth.exists():
             return f"The media file does not exist: {pth}"
 
     return None
@@ -219,9 +221,7 @@ class State:
 @require(lambda path: not path.is_absolute())
 def play_sound(path: pathlib.Path) -> float:
     """Start playing the sound and returns its length."""
-    sound = pygame.mixer.Sound(
-        str(importlib.resources.files(__package__).joinpath(str(path)))
-    )
+    sound = pygame.mixer.Sound(str(PACKAGE_DIR / path))
     sound.play()
     return sound.get_length()
 
@@ -339,18 +339,15 @@ def rescale_image_relative_to_surface_height(
 
 def render(state: State, surface: pygame.surface.Surface) -> None:
     """Render the game on the screen."""
-    package_dir = importlib.resources.files(__package__)
-
     surface.fill((0, 0, 0))
 
-    position = pygame.image.load(
-        str(package_dir.joinpath(str(state.task.expected_position)))
-    )
+    position = pygame.image.load(str(PACKAGE_DIR / state.task.expected_position))
+
     position = rescale_image_relative_to_surface_width(position, 0.4, surface)
 
     surface.blit(position, (10, 10))
 
-    picture = pygame.image.load(str(package_dir.joinpath(str(state.task.picture))))
+    picture = pygame.image.load(str(PACKAGE_DIR / state.task.picture))
 
     if picture.get_height() > picture.get_width():
         picture = rescale_image_relative_to_surface_height(picture, 0.7, surface)
@@ -360,12 +357,12 @@ def render(state: State, surface: pygame.surface.Surface) -> None:
     surface.blit(picture, (position.get_width() + 60, 10))
 
     # noinspection SpellCheckingInspection
-    font_large = pygame.font.Font("freesansbold.ttf", 64)
+    font_large = pygame.font.Font(PACKAGE_DIR / "media/freesansbold.ttf", 64)
     score = font_large.render(f"Score: {state.score}", True, (255, 255, 255))
     surface.blit(score, (position.get_width() + 60, picture.get_height() + 60))
 
     # noinspection SpellCheckingInspection
-    font_small = pygame.font.Font("freesansbold.ttf", 32)
+    font_small = pygame.font.Font(PACKAGE_DIR / "media/freesansbold.ttf", 32)
     escape = font_small.render('Press ESC or "q" to quit', True, (255, 255, 255))
     surface.blit(
         escape,
