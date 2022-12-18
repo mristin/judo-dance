@@ -12,7 +12,7 @@ import pygame
 from icontract import require
 
 import judodance
-import judodance.actions
+import judodance.events
 from judodance.common import assert_never
 
 assert judodance.__doc__ == __doc__
@@ -30,7 +30,7 @@ class Task:
     #: Set of buttons which need to be active to accomplish the task.
     #:
     #: Empty means back to the cool down position.
-    expected_buttons: Final[Set[judodance.actions.Button]]
+    expected_buttons: Final[Set[judodance.events.Button]]
 
     #: Relative path to the picture illustrating the task in more abstract terms
     picture: Final[pathlib.Path]
@@ -44,7 +44,7 @@ class Task:
         self,
         expected_position: pathlib.Path,
         announcement: pathlib.Path,
-        expected_buttons: Set[judodance.actions.Button],
+        expected_buttons: Set[judodance.events.Button],
         picture: pathlib.Path,
         score_delta: int,
     ) -> None:
@@ -68,6 +68,9 @@ class TaskDatabase:
     #: Relative path to the accomplishment sound
     accomplishment: Final[pathlib.Path]
 
+    #: How long to wait to play the reminder after announcing the task
+    reminder_slack: Final[float]
+
     @require(lambda tasks, cool_down: cool_down not in tasks)
     @require(lambda accomplishment: not accomplishment.is_absolute())
     def __init__(
@@ -78,6 +81,8 @@ class TaskDatabase:
         self.cool_down = cool_down
         self.accomplishment = accomplishment
 
+        self.reminder_slack = 5
+
 
 # noinspection SpellCheckingInspection
 def create_task_database() -> TaskDatabase:
@@ -86,8 +91,8 @@ def create_task_database() -> TaskDatabase:
         expected_position=pathlib.Path("media/tasks/tai_otoshi_rechts/keypad.png"),
         announcement=pathlib.Path("media/tasks/tai_otoshi_rechts/announcement.ogg"),
         expected_buttons={
-            judodance.actions.Button.CROSS,
-            judodance.actions.Button.CIRCLE,
+            judodance.events.Button.CROSS,
+            judodance.events.Button.CIRCLE,
         },
         picture=pathlib.Path("media/tasks/tai_otoshi_rechts/picture.png"),
         score_delta=1,
@@ -97,8 +102,8 @@ def create_task_database() -> TaskDatabase:
         expected_position=pathlib.Path("media/tasks/tai_otoshi_links/keypad.png"),
         announcement=pathlib.Path("media/tasks/tai_otoshi_links/announcement.ogg"),
         expected_buttons={
-            judodance.actions.Button.CROSS,
-            judodance.actions.Button.CIRCLE,
+            judodance.events.Button.CROSS,
+            judodance.events.Button.CIRCLE,
         },
         picture=pathlib.Path("media/tasks/tai_otoshi_links/picture.png"),
         score_delta=1,
@@ -107,7 +112,7 @@ def create_task_database() -> TaskDatabase:
     uki_goshi_rechts = Task(
         expected_position=pathlib.Path("media/tasks/uki_goshi_rechts/keypad.png"),
         announcement=pathlib.Path("media/tasks/uki_goshi_rechts/announcement.ogg"),
-        expected_buttons={judodance.actions.Button.CROSS, judodance.actions.Button.UP},
+        expected_buttons={judodance.events.Button.CROSS, judodance.events.Button.UP},
         picture=pathlib.Path("media/tasks/uki_goshi_rechts/picture.png"),
         score_delta=1,
     )
@@ -115,7 +120,7 @@ def create_task_database() -> TaskDatabase:
     uki_goshi_links = Task(
         expected_position=pathlib.Path("media/tasks/uki_goshi_links/keypad.png"),
         announcement=pathlib.Path("media/tasks/uki_goshi_links/announcement.ogg"),
-        expected_buttons={judodance.actions.Button.UP, judodance.actions.Button.CIRCLE},
+        expected_buttons={judodance.events.Button.UP, judodance.events.Button.CIRCLE},
         picture=pathlib.Path("media/tasks/uki_goshi_links/picture.png"),
         score_delta=1,
     )
@@ -123,7 +128,7 @@ def create_task_database() -> TaskDatabase:
     osoto_otoshi_rechts = Task(
         expected_position=pathlib.Path("media/tasks/osoto_otoshi_rechts/keypad.png"),
         announcement=pathlib.Path("media/tasks/osoto_otoshi_rechts/announcement.ogg"),
-        expected_buttons={judodance.actions.Button.UP, judodance.actions.Button.CIRCLE},
+        expected_buttons={judodance.events.Button.UP, judodance.events.Button.CIRCLE},
         picture=pathlib.Path("media/tasks/osoto_otoshi_rechts/picture.png"),
         score_delta=1,
     )
@@ -131,7 +136,7 @@ def create_task_database() -> TaskDatabase:
     osoto_otoshi_links = Task(
         expected_position=pathlib.Path("media/tasks/osoto_otoshi_links/keypad.png"),
         announcement=pathlib.Path("media/tasks/osoto_otoshi_links/announcement.ogg"),
-        expected_buttons={judodance.actions.Button.UP, judodance.actions.Button.CROSS},
+        expected_buttons={judodance.events.Button.UP, judodance.events.Button.CROSS},
         picture=pathlib.Path("media/tasks/osoto_otoshi_links/picture.png"),
         score_delta=1,
     )
@@ -187,26 +192,26 @@ class State:
     #: Indicate the current task
     task: Task
 
-    #: Seconds since epoch when the task has been announced
-    announced: Optional[float]
-
-    #: Seconds since epoch since the last reminder to fulfill the task
-    reminded: Optional[float]
+    #: Seconds since epoch to be reminded the next time about the task
+    next_reminder: Optional[float]
 
     #: Currently pressed buttons
-    active_buttons: Set[judodance.actions.Button]
+    active_button_set: Set[judodance.events.Button]
+
+    #: Set if the task has been accomplished
+    accomplished: bool
 
     #: Seconds since epoch when the task will be accomplished and the next task picked
-    accomplished: Optional[float]
+    accomplished_played: Optional[float]
 
     def __init__(self, initial_task: Task) -> None:
         """Initialize with the default values."""
         self.received_quit = False
         self.task = initial_task
-        self.announced = None
-        self.reminded = None
-        self.active_buttons = set()
-        self.accomplished = None
+        self.next_reminder = None
+        self.active_button_set = set()
+        self.accomplished = False
+        self.accomplished_played = None
 
         self.score = 0
 
@@ -222,54 +227,84 @@ def play_sound(path: pathlib.Path) -> float:
 
 
 def handle(
-    state: State, action: judodance.actions.ActionUnion, task_database: TaskDatabase
+    state: State,
+    our_event_queue: List[judodance.events.EventUnion],
+    task_database: TaskDatabase,
 ) -> None:
-    """Handle the event and mutate the state."""
-    if isinstance(action, judodance.actions.Quit):
+    """Consume the first action in the queue."""
+    if len(our_event_queue) == 0:
+        return
+
+    now = time.time()
+    event = our_event_queue.pop(0)
+
+    if isinstance(event, judodance.events.ReceivedQuit):
         state.received_quit = True
-    elif isinstance(action, judodance.actions.Pressed):
-        state.active_buttons = action.active_button_set.copy()
 
-    elif isinstance(action, judodance.actions.Tick):
-        # NOTE (mristin, 2022-12-16):
-        # We use the tick action to handle all the side effects.
-
-        now = time.time()
-
-        if state.active_buttons == state.task.expected_buttons:
-            if state.accomplished is None:
-                if state.task is not task_database.cool_down:
-                    state.accomplished = now + play_sound(task_database.accomplishment)
-                else:
-                    state.accomplished = now
-
-        if state.accomplished is not None and now >= state.accomplished:
-            # Pick the next task
-            if state.task is task_database.cool_down:
-                state.task = random.choice(task_database.tasks)
-            else:
-                state.score += state.task.score_delta
-                state.task = task_database.cool_down
-
-            state.announced = None
-            state.reminded = None
-            state.accomplished = None
-
-        elif state.announced is None:
-            play_sound(state.task.announcement)
-            state.announced = now
+    elif isinstance(event, judodance.events.NeedToAnnounce):
+        # Announce only the techniques; it's too boring to hear the "cool down" sound
+        # all the time
+        if state.task is not task_database.cool_down:
+            announcement_length = play_sound(state.task.announcement)
+            state.next_reminder = (
+                now + announcement_length + task_database.reminder_slack
+            )
         else:
-            slack = 5  # in seconds
-            if state.reminded is None:
-                if now - state.announced > slack:
-                    play_sound(state.task.announcement)
-                    state.reminded = now
-            else:
-                if now - state.reminded > slack:
-                    play_sound(state.task.announcement)
-                    state.reminded = now
+            state.next_reminder = now + task_database.reminder_slack
+
+    elif isinstance(event, judodance.events.ButtonsChanged):
+        state.active_button_set = event.active_button_set.copy()
+
+    elif isinstance(event, judodance.events.Accomplished):
+        if state.task is not task_database.cool_down:
+            accomplished_sound_length = play_sound(task_database.accomplishment)
+            state.accomplished_played = now + accomplished_sound_length
+        else:
+            our_event_queue.append(judodance.events.TaskDone())
+
+    elif isinstance(event, judodance.events.TaskDone):
+        # Pick the next task
+        if state.task is task_database.cool_down:
+            state.task = random.choice(task_database.tasks)
+        else:
+            state.score += state.task.score_delta
+            state.task = task_database.cool_down
+
+        state.accomplished = False
+        state.next_reminder = None
+        state.accomplished_played = None
+
+        our_event_queue.append(judodance.events.NeedToAnnounce())
+
+    elif isinstance(event, judodance.events.Tick):
+        # Handle the time
+
+        if state.accomplished_played is not None and now >= state.accomplished_played:
+            our_event_queue.append(judodance.events.TaskDone())
+
+        elif state.next_reminder is not None and now >= state.next_reminder:
+            announcement_length = play_sound(state.task.announcement)
+            state.next_reminder = (
+                now + announcement_length + +task_database.reminder_slack
+            )
+        else:
+            # No side effect based on time
+            pass
+
+        # If the player jumped to the button *before* the announcement, we still
+        # want to react to the correct position. That is, we can not react only on
+        # change of buttons, but need to constantly check if the task has not been
+        # accomplished.
+        if (
+            state.active_button_set == state.task.expected_buttons
+            and not state.accomplished
+        ):
+            state.accomplished = True
+            state.next_reminder = None
+            our_event_queue.append(judodance.events.Accomplished())
+
     else:
-        assert_never(action)
+        assert_never(event)
 
 
 @require(lambda percentage: 0 <= percentage <= 1)
@@ -387,14 +422,14 @@ def main(prog: str) -> int:
     # For rapid development, we simply map the buttons of our concrete dance mat to
     # button numbers.
     button_map = {
-        6: judodance.actions.Button.CROSS,
-        2: judodance.actions.Button.UP,
-        7: judodance.actions.Button.CIRCLE,
-        3: judodance.actions.Button.RIGHT,
-        5: judodance.actions.Button.SQUARE,
-        1: judodance.actions.Button.DOWN,
-        4: judodance.actions.Button.TRIANGLE,
-        0: judodance.actions.Button.LEFT,
+        6: judodance.events.Button.CROSS,
+        2: judodance.events.Button.UP,
+        7: judodance.events.Button.CIRCLE,
+        3: judodance.events.Button.RIGHT,
+        5: judodance.events.Button.SQUARE,
+        1: judodance.events.Button.DOWN,
+        4: judodance.events.Button.TRIANGLE,
+        0: judodance.events.Button.LEFT,
     }
 
     pygame.init()
@@ -412,19 +447,22 @@ def main(prog: str) -> int:
 
     state = State(initial_task=random.choice(task_database.tasks))
 
+    our_event_queue = [
+        judodance.events.NeedToAnnounce()
+    ]  # type: List[judodance.events.EventUnion]
+
     try:
         while not state.received_quit:
             for event in pygame.event.get():
-                action = None  # type: Optional[judodance.actions.ActionUnion]
-
                 if event.type == pygame.QUIT:
-                    action = judodance.actions.Quit()
+                    our_event_queue.append(judodance.events.ReceivedQuit())
+
                 elif (
                     event.type in (pygame.JOYBUTTONDOWN, pygame.JOYBUTTONUP)
                     and joysticks[event.instance_id] is active_joystick
                 ):
                     # List all the active buttons on this event
-                    active_button_set = set()  # type: Set[judodance.actions.Button]
+                    active_button_set = set()  # type: Set[judodance.events.Button]
                     for button_index in range(active_joystick.get_numbuttons()):
                         button_active = active_joystick.get_button(button_index) > 0
 
@@ -436,22 +474,24 @@ def main(prog: str) -> int:
                                 # Ignore unmapped buttons
                                 pass
 
-                    action = judodance.actions.Pressed(active_button_set)
+                    our_event_queue.append(
+                        judodance.events.ButtonsChanged(active_button_set)
+                    )
 
                 elif event.type == pygame.KEYDOWN and event.key in (
                     pygame.K_ESCAPE,
                     pygame.K_q,
                 ):
-                    action = judodance.actions.Quit()
+                    our_event_queue.append(judodance.events.ReceivedQuit())
 
                 else:
                     # Ignore the event that we do not handle
                     pass
 
-                if action is not None:
-                    handle(state, action, task_database)
+            our_event_queue.append(judodance.events.Tick())
 
-            handle(state, judodance.actions.Tick(), task_database)
+            while len(our_event_queue) > 0:
+                handle(state, our_event_queue, task_database)
 
             render(state, surface)
     finally:
