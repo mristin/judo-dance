@@ -10,53 +10,23 @@ Practice judo techniques using a dancing pad.
 
 Installation
 ============
-Make sure you have Python installed on your system.
-
-Create a virtual environment on your system:
-
-.. code-block::
-
-    python -m venv venv
-
-Activate it (on Windows):
-
-.. code-block::
-
-    venv\Scripts\activate
-
-... or on Mac/Linux:
-
-.. code-block::
-
-    source venv/bin/activate
-
-Download the Judo Dance from the `Releases`_.
+Download and unzip a version of the game from the `Releases`_.
 
 .. _Releases: https://github.com/mristin/judo-dance-desktop/releases
-
-Install the Judo Dance (please adapt the version to the one you downloaded):
-
-.. code-block::
-
-    pip3 install judo-dance-0.0.1.tar.gz
 
 Running
 =======
 You need to connect the dance mat *before* starting the game.
 
-In the activated virtual environment, just run the Judo Dance with a command:
-
-.. code-block::
-
-    judo-dance
+Run ``judo-dance.exe`` (in the directory where you unzipped the game).
 
 If you have multiple joysticks attached, the first joystick is automatically selected, and assumed to be the dance mat.
 
-If the first joystick does not correspond to your dance mat, list the available joysticks with:
+If the first joystick does not correspond to your dance mat, list the available joysticks with the following command in the command prompt:
 
 .. code-block::
 
-    judo-dance --list_joysticks
+    judo-dance.exe --list_joysticks
 
 You will see the names and unique IDs (GUIDs) of your joysticks.
 Select the joystick that you wish by providing its GUI.
@@ -64,7 +34,7 @@ For example:
 
 .. code-block::
 
-    judo-dance -joystick 03000000790000001100000000000000
+    judo-dance.exe -joystick 03000000790000001100000000000000
 
 Which dance mat to use?
 =======================
