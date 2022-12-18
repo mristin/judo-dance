@@ -312,13 +312,11 @@ def rescale_image_relative_to_surface_width(
     image: pygame.surface.Surface, percentage: float, surface: pygame.surface.Surface
 ) -> pygame.surface.Surface:
     """Rescale the image as a percentage of the ``surface`` size."""
-    surface_width = surface.get_width()
-
     image_rect = image.get_rect()
     image_width = image_rect.width
     image_height = image_rect.height
 
-    new_image_width = int(surface_width * percentage)
+    new_image_width = int(surface.get_width() * percentage)
     new_image_height = int(image_height * (new_image_width / image_width))
 
     return pygame.transform.scale(image, (new_image_width, new_image_height))
@@ -329,8 +327,6 @@ def rescale_image_relative_to_surface_height(
     image: pygame.surface.Surface, percentage: float, surface: pygame.surface.Surface
 ) -> pygame.surface.Surface:
     """Rescale the image as a percentage of the ``surface`` size."""
-    surface_width = surface.get_width()
-
     image_rect = image.get_rect()
     image_width = image_rect.width
     image_height = image_rect.height
