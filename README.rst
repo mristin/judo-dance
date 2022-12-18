@@ -74,9 +74,3 @@ https://www.amazon.com/OSTENT-Non-Slip-Dancing-Dance-Compatible-PC/dp/B00FJ2KT8M
 Please let us know by `creating an issue`_ if you tested the game with other mats!
 
 .. _creating an issue: https://github.com/mristin/judo-dance/issues/new
-
-Acknowledgments
-===============
-The pictures illustrating the techniques are taken from the book we use for the exams.
-I do not have the exact book title at hand, but will list it here ASAP.
-The copyright belongs to the original authors.
