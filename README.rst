@@ -1,9 +1,9 @@
 **********
-judo-dance
+Judo Dance
 **********
 
-.. image:: https://github.com/mristin/judo-dance/actions/workflows/ci.yml/badge.svg
-    :target: https://github.com/mristin/judo-dance/actions/workflows/ci.yml
+.. image:: https://github.com/mristin/judo-dance-desktop/actions/workflows/ci.yml/badge.svg
+    :target: https://github.com/mristin/judo-dance-desktop/actions/workflows/ci.yml
     :alt: Continuous integration
 
 Practice judo techniques using a dancing pad.
@@ -32,7 +32,7 @@ Activate it (on Windows):
 
 Download the Judo Dance from the `Releases`_.
 
-.. _Releases: https://github.com/mristin/judo-dance/releases
+.. _Releases: https://github.com/mristin/judo-dance-desktop/releases
 
 Install the Judo Dance (please adapt the version to the one you downloaded):
 
@@ -73,4 +73,4 @@ https://www.amazon.com/OSTENT-Non-Slip-Dancing-Dance-Compatible-PC/dp/B00FJ2KT8M
 
 Please let us know by `creating an issue`_ if you tested the game with other mats!
 
-.. _creating an issue: https://github.com/mristin/judo-dance/issues/new
+.. _creating an issue: https://github.com/mristin/judo-dance-desktop/issues/new

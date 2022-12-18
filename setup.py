@@ -25,7 +25,7 @@ setup(
     version="0.0.1",
     description="Practice judo techniques using a dancing pad.",
     long_description=long_description,
-    url="https://github.com/mristin/judo-dance",
+    url="https://github.com/mristin/judo-dance-desktop",
     author="Marko Ristin",
     author_email="marko@ristin.ch",
     classifiers=[
