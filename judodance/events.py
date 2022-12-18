@@ -6,23 +6,23 @@ from typing import Set, Union
 from icontract import DBC
 
 
-class Action(DBC):
-    """Represent an abstract action in the game."""
+class Event(DBC):
+    """Represent an abstract event in the game."""
 
     @abc.abstractmethod
     def __str__(self) -> str:
         raise NotImplementedError()
 
 
-class Tick(Action):
+class Tick(Event):
     """Mark a tick in the (irregular) game clock."""
 
     def __str__(self) -> str:
         return self.__class__.__name__
 
 
-class Quit(Action):
-    """Exit the game."""
+class ReceivedQuit(Event):
+    """Signal that we have to exit the game."""
 
     def __str__(self) -> str:
         return self.__class__.__name__
@@ -41,7 +41,7 @@ class Button(enum.Enum):
     LEFT = 7
 
 
-class Pressed(Action):
+class ButtonsChanged(Event):
     """Capture the change in active (pressed) buttons."""
 
     def __init__(self, active_button_set: Set[Button]) -> None:
@@ -53,4 +53,27 @@ class Pressed(Action):
         return f"{self.__class__.__name__}({buttons_joined})"
 
 
-ActionUnion = Union[Tick, Quit, Pressed]
+class Accomplished(Event):
+    """Signal that the task has been accomplished."""
+
+    def __str__(self) -> str:
+        return self.__class__.__name__
+
+
+class TaskDone(Event):
+    """Signal that the task has been completely completed including all the effects."""
+
+    def __str__(self) -> str:
+        return self.__class__.__name__
+
+
+class NeedToAnnounce(Event):
+    """Signal that we need to announce the task."""
+
+    def __str__(self) -> str:
+        return self.__class__.__name__
+
+
+EventUnion = Union[
+    Tick, ReceivedQuit, ButtonsChanged, Accomplished, TaskDone, NeedToAnnounce
+]
