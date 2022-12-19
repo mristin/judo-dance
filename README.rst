@@ -44,3 +44,9 @@ https://www.amazon.com/OSTENT-Non-Slip-Dancing-Dance-Compatible-PC/dp/B00FJ2KT8M
 Please let us know by `creating an issue`_ if you tested the game with other mats!
 
 .. _creating an issue: https://github.com/mristin/judo-dance-desktop/issues/new
+
+Acknowledgments
+===============
+The hour glass sprite has been taken from: https://olgas-lab.itch.io/hourglass
+
+The sprites of medals have been taken from: https://opengameart.org/content/easy-medals

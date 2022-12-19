@@ -74,6 +74,13 @@ class NeedToAnnounce(Event):
         return self.__class__.__name__
 
 
+class GameOver(Event):
+    """Signal that the time is up."""
+
+    def __str__(self) -> str:
+        return self.__class__.__name__
+
+
 EventUnion = Union[
-    Tick, ReceivedQuit, ButtonsChanged, Accomplished, TaskDone, NeedToAnnounce
+    Tick, ReceivedQuit, ButtonsChanged, Accomplished, TaskDone, NeedToAnnounce, GameOver
 ]

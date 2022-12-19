@@ -6,10 +6,10 @@ import pathlib
 import random
 import sys
 import time
-from typing import Optional, Set, Final, List
+from typing import Optional, Set, Final, List, MutableMapping, Union
 
 import pygame
-from icontract import require
+from icontract import require, invariant
 
 import judodance
 import judodance.events
@@ -185,6 +185,7 @@ def check_all_files_exist(task_database: TaskDatabase) -> Optional[str]:
     return None
 
 
+@invariant(lambda self: 0 <= self.game_time <= self.game_end - self.game_start)
 class State:
     """Capture the global state of the game."""
 
@@ -206,8 +207,21 @@ class State:
     #: Seconds since epoch when the task will be accomplished and the next task picked
     accomplished_played: Optional[float]
 
-    def __init__(self, initial_task: Task) -> None:
-        """Initialize with the default values."""
+    #: Timestamp when the game started, seconds since epoch
+    game_start: Final[float]
+
+    #: Seconds since the game start
+    game_time: float
+
+    #: Timestamp when the game is to end, seconds since epoch
+    game_end: Final[float]
+
+    #: Set when the time is up
+    game_over: bool
+
+    @require(lambda game_start, game_end: game_start <= game_end)
+    def __init__(self, initial_task: Task, game_start: float, game_end: float) -> None:
+        """Initialize with the given values and the defaults."""
         self.received_quit = False
         self.task = initial_task
         self.next_reminder = None
@@ -216,6 +230,11 @@ class State:
         self.accomplished_played = None
 
         self.score = 0
+
+        self.game_start = game_start
+        self.game_time = 0
+        self.game_end = game_end
+        self.game_over = False
 
 
 @require(lambda path: not path.is_absolute())
@@ -276,32 +295,43 @@ def handle(
 
         our_event_queue.append(judodance.events.NeedToAnnounce())
 
+    elif isinstance(event, judodance.events.GameOver):
+        state.game_over = True
+
     elif isinstance(event, judodance.events.Tick):
         # Handle the time
 
-        if state.accomplished_played is not None and now >= state.accomplished_played:
-            our_event_queue.append(judodance.events.TaskDone())
-
-        elif state.next_reminder is not None and now >= state.next_reminder:
-            announcement_length = play_sound(state.task.announcement)
-            state.next_reminder = (
-                now + announcement_length + +task_database.reminder_slack
-            )
+        if now > state.game_end:
+            our_event_queue.append(judodance.events.GameOver())
         else:
-            # No side effect based on time
-            pass
+            state.game_time = now - state.game_start
 
-        # If the player jumped to the button *before* the announcement, we still
-        # want to react to the correct position. That is, we can not react only on
-        # change of buttons, but need to constantly check if the task has not been
-        # accomplished.
-        if (
-            state.active_button_set == state.task.expected_buttons
-            and not state.accomplished
-        ):
-            state.accomplished = True
-            state.next_reminder = None
-            our_event_queue.append(judodance.events.Accomplished())
+            if (
+                state.accomplished_played is not None
+                and now >= state.accomplished_played
+            ):
+                our_event_queue.append(judodance.events.TaskDone())
+
+            elif state.next_reminder is not None and now >= state.next_reminder:
+                announcement_length = play_sound(state.task.announcement)
+                state.next_reminder = (
+                    now + announcement_length + +task_database.reminder_slack
+                )
+            else:
+                # No side effect based on time
+                pass
+
+            # If the player jumped to the button *before* the announcement, we still
+            # want to react to the correct position. That is, we can not react only on
+            # change of buttons, but need to constantly check if the task has not been
+            # accomplished.
+            if (
+                state.active_button_set == state.task.expected_buttons
+                and not state.accomplished
+            ):
+                state.accomplished = True
+                state.next_reminder = None
+                our_event_queue.append(judodance.events.Accomplished())
 
     else:
         assert_never(event)
@@ -337,39 +367,122 @@ def rescale_image_relative_to_surface_height(
     return pygame.transform.scale(image, (new_image_width, new_image_height))
 
 
-def render(state: State, surface: pygame.surface.Surface) -> None:
-    """Render the game on the screen."""
+def render_game_over(state: State, surface: pygame.surface.Surface) -> None:
+    """Render the "game over" dialogue."""
     surface.fill((0, 0, 0))
 
-    position = pygame.image.load(str(PACKAGE_DIR / state.task.expected_position))
-
-    position = rescale_image_relative_to_surface_width(position, 0.4, surface)
-
-    surface.blit(position, (10, 10))
-
-    picture = pygame.image.load(str(PACKAGE_DIR / state.task.picture))
-
-    if picture.get_height() > picture.get_width():
-        picture = rescale_image_relative_to_surface_height(picture, 0.7, surface)
-    else:
-        picture = rescale_image_relative_to_surface_width(picture, 0.4, surface)
-
-    surface.blit(picture, (position.get_width() + 60, 10))
-
-    # noinspection SpellCheckingInspection
     font_large = pygame.font.Font(PACKAGE_DIR / "media/freesansbold.ttf", 64)
-    score = font_large.render(f"Score: {state.score}", True, (255, 255, 255))
-    surface.blit(score, (position.get_width() + 60, picture.get_height() + 60))
+    game_over = font_large.render("Game Over", True, (255, 255, 255))
+    game_over_xy = (
+        int(surface.get_width() / 2) - int(game_over.get_width() / 2),
+        int(surface.get_height() / 2) - int(game_over.get_height() / 2),
+    )
 
-    # noinspection SpellCheckingInspection
-    font_small = pygame.font.Font(PACKAGE_DIR / "media/freesansbold.ttf", 32)
+    surface.blit(game_over, game_over_xy)
+
+    score = font_large.render(f"Score: {state.score}", True, (255, 255, 255))
+    score_xy = (
+        int(surface.get_width() / 2) - int(score.get_width() / 2),
+        game_over_xy[1] + game_over.get_height() + 10,
+    )
+    surface.blit(score, score_xy)
+
+    if state.score < 10:
+        medal_pth = "media/medals/bronze.png"
+    elif state.score < 20:
+        medal_pth = "media/medals/silver.png"
+    else:
+        medal_pth = "media/medals/gold.png"
+
+    medal = load_image_or_retrieve_from_cache(medal_pth)
+    medal_xy = (
+        int(surface.get_width() / 2) - int(medal.get_width() / 2),
+        score_xy[1] + score.get_height() + 10,
+    )
+    surface.blit(medal, medal_xy)
+
+    font_small = pygame.font.Font(PACKAGE_DIR / "media/freesansbold.ttf", 16)
     escape = font_small.render('Press ESC or "q" to quit', True, (255, 255, 255))
     surface.blit(
         escape,
         (10, surface.get_height() - escape.get_height() - 20),
     )
 
-    pygame.display.flip()
+
+def render_game(state: State, surface: pygame.surface.Surface) -> None:
+    """Render the game on the screen."""
+    surface.fill((0, 0, 0))
+
+    position = load_image_or_retrieve_from_cache(state.task.expected_position)
+
+    position = rescale_image_relative_to_surface_width(position, 0.4, surface)
+
+    surface.blit(position, (10, 10))
+
+    picture = load_image_or_retrieve_from_cache(state.task.picture)
+
+    if picture.get_height() > picture.get_width():
+        picture = rescale_image_relative_to_surface_height(picture, 0.7, surface)
+    else:
+        picture = rescale_image_relative_to_surface_width(picture, 0.4, surface)
+
+    picture_xy = (position.get_width() + 60, 10)
+    surface.blit(picture, picture_xy)
+
+    font_large = pygame.font.Font(PACKAGE_DIR / "media/freesansbold.ttf", 64)
+    score = font_large.render(f"Score: {state.score}", True, (255, 255, 255))
+    score_xy = (position.get_width() + 60, picture.get_height() + 60)
+    surface.blit(score, score_xy)
+
+    game_time_fraction = state.game_time / (state.game_end - state.game_start)
+    if game_time_fraction < 1 / 5:
+        hourglass_pth = "media/hourglass/frame_01.png"
+    elif game_time_fraction < 2 / 5:
+        hourglass_pth = "media/hourglass/frame_02.png"
+    elif game_time_fraction < 3 / 5:
+        hourglass_pth = "media/hourglass/frame_03.png"
+    elif game_time_fraction < 4 / 5:
+        hourglass_pth = "media/hourglass/frame_04.png"
+    else:
+        hourglass_pth = "media/hourglass/frame_05.png"
+
+    hourglass = load_image_or_retrieve_from_cache(hourglass_pth)
+    hourglass = rescale_image_relative_to_surface_width(hourglass, 0.3, surface)
+
+    hourglass_xy = (picture_xy[0] + picture.get_width() + 10, picture_xy[1])
+    surface.blit(hourglass, hourglass_xy)
+
+    font_small = pygame.font.Font(PACKAGE_DIR / "media/freesansbold.ttf", 16)
+    escape = font_small.render('Press ESC or "q" to quit', True, (255, 255, 255))
+    surface.blit(
+        escape,
+        (10, surface.get_height() - escape.get_height() - 20),
+    )
+
+
+IMAGE_CACHE = dict()  # type: MutableMapping[str, pygame.surface.Surface]
+
+
+@require(lambda path: not os.path.isabs(str(path)))
+def load_image_or_retrieve_from_cache(
+    path: Union[str, os.PathLike[str]]
+) -> pygame.surface.Surface:
+    """Load the image or retrieve it from the memory cache."""
+    image = IMAGE_CACHE.get(str(path), None)
+    if image is not None:
+        return image
+
+    image = pygame.image.load(str(PACKAGE_DIR / path))
+    IMAGE_CACHE[str(path)] = image
+    return image
+
+
+def render(state: State, surface: pygame.surface.Surface) -> None:
+    """Render the state on the screen."""
+    if state.game_over:
+        render_game_over(state, surface)
+    else:
+        render_game(state, surface)
 
 
 def main(prog: str) -> int:
@@ -414,6 +527,7 @@ def main(prog: str) -> int:
 
     args = parser.parse_args()
 
+    # noinspection PyUnusedLocal
     active_joystick = None  # type: Optional[pygame.joystick.Joystick]
     if len(joysticks) == 0:
         print(
@@ -460,11 +574,22 @@ def main(prog: str) -> int:
         print(error, file=sys.stderr)
         return 1
 
-    state = State(initial_task=random.choice(task_database.tasks))
+    now = time.time()
+
+    game_duration = 120  # in seconds
+
+    state = State(
+        initial_task=random.choice(task_database.tasks),
+        game_start=now,
+        game_end=now + game_duration,
+    )
 
     our_event_queue = [
         judodance.events.NeedToAnnounce()
     ]  # type: List[judodance.events.EventUnion]
+
+    # Reuse the tick object so that we don't have to create it every time
+    tick_event = judodance.events.Tick()
 
     try:
         while not state.received_quit:
@@ -503,12 +628,13 @@ def main(prog: str) -> int:
                     # Ignore the event that we do not handle
                     pass
 
-            our_event_queue.append(judodance.events.Tick())
+            our_event_queue.append(tick_event)
 
             while len(our_event_queue) > 0:
                 handle(state, our_event_queue, task_database)
 
             render(state, surface)
+            pygame.display.flip()
     finally:
         pygame.joystick.quit()
         pygame.quit()
