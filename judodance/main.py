@@ -387,9 +387,9 @@ def render_game_over(state: State, surface: pygame.surface.Surface) -> None:
     )
     surface.blit(score, score_xy)
 
-    if state.score < 10:
+    if state.score < 20:
         medal_pth = "media/medals/bronze.png"
-    elif state.score < 20:
+    elif state.score < 30:
         medal_pth = "media/medals/silver.png"
     else:
         medal_pth = "media/medals/gold.png"
