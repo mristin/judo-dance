@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d01fca27-c05a-4cb7-93a0-82d13d73ee11" name="Changes" comment="" />
+    <list default="true" id="d01fca27-c05a-4cb7-93a0-82d13d73ee11" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/CHANGELOG.rst" beforeDir="false" afterPath="$PROJECT_DIR$/CHANGELOG.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/judodance/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/judodance/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

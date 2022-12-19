@@ -2,6 +2,13 @@
 Changelog
 *********
 
+0.0.3 (2022-12-19)
+==================
+We implement a couple of improvements after play-testing.
+
+* Show rounded arrows on keypads
+* Add game duration and medals
+
 0.0.2 (2022-12-18)
 ==================
 This is the first fairly playable version.
