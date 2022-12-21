@@ -11,6 +11,10 @@ Practice judo techniques using a dancing pad.
 .. image:: https://media.githubusercontent.com/media/mristin/judo-dance-desktop/main/screenshot.png
     :alt: Screenshot
 
+.. image:: https://media.githubusercontent.com/media/mristin/judo-dance-desktop/main/youtube-screenshot.png
+    :alt: Youtube Screenshot
+    :target: https://www.youtube.com/watch?v=Q6WWgS3bkhk
+
 Installation
 ============
 Download and unzip a version of the game from the `Releases`_.
