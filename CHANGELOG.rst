@@ -2,6 +2,12 @@
 Changelog
 *********
 
+0.0.4 (2022-12-22)
+==================
+We make the game reactive to the screen size.
+Everything is rendered relative to the screen size, and absolute pixel
+numbers are not used.
+
 0.0.3 (2022-12-19)
 ==================
 We implement a couple of improvements after play-testing.
