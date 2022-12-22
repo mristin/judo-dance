@@ -369,9 +369,12 @@ def rescale_image_relative_to_surface_height(
 
 def render_game_over(state: State, surface: pygame.surface.Surface) -> None:
     """Render the "game over" dialogue."""
+    oneph = max(1, int(0.01 * surface.get_height()))
+    onepw = max(1, int(0.01 * surface.get_height()))
+
     surface.fill((0, 0, 0))
 
-    font_large = pygame.font.Font(PACKAGE_DIR / "media/freesansbold.ttf", 64)
+    font_large = pygame.font.Font(PACKAGE_DIR / "media/freesansbold.ttf", 5 * oneph)
     game_over = font_large.render("Game Over", True, (255, 255, 255))
     game_over_xy = (
         int(surface.get_width() / 2) - int(game_over.get_width() / 2),
@@ -383,7 +386,7 @@ def render_game_over(state: State, surface: pygame.surface.Surface) -> None:
     score = font_large.render(f"Score: {state.score}", True, (255, 255, 255))
     score_xy = (
         int(surface.get_width() / 2) - int(score.get_width() / 2),
-        game_over_xy[1] + game_over.get_height() + 10,
+        game_over_xy[1] + game_over.get_height() + oneph,
     )
     surface.blit(score, score_xy)
 
@@ -397,15 +400,15 @@ def render_game_over(state: State, surface: pygame.surface.Surface) -> None:
     medal = load_image_or_retrieve_from_cache(medal_pth)
     medal_xy = (
         int(surface.get_width() / 2) - int(medal.get_width() / 2),
-        score_xy[1] + score.get_height() + 10,
+        score_xy[1] + score.get_height() + oneph,
     )
     surface.blit(medal, medal_xy)
 
-    font_small = pygame.font.Font(PACKAGE_DIR / "media/freesansbold.ttf", 16)
+    font_small = pygame.font.Font(PACKAGE_DIR / "media/freesansbold.ttf", 2 * oneph)
     escape = font_small.render('Press ESC or "q" to quit', True, (255, 255, 255))
     surface.blit(
         escape,
-        (10, surface.get_height() - escape.get_height() - 20),
+        (onepw, surface.get_height() - escape.get_height() - 2 * oneph),
     )
 
 
@@ -413,11 +416,14 @@ def render_game(state: State, surface: pygame.surface.Surface) -> None:
     """Render the game on the screen."""
     surface.fill((0, 0, 0))
 
+    oneph = max(1, int(0.01 * surface.get_height()))
+    onepw = max(1, int(0.01 * surface.get_height()))
+
     position = load_image_or_retrieve_from_cache(state.task.expected_position)
 
     position = rescale_image_relative_to_surface_width(position, 0.4, surface)
 
-    surface.blit(position, (10, 10))
+    surface.blit(position, (onepw, oneph))
 
     picture = load_image_or_retrieve_from_cache(state.task.picture)
 
@@ -426,12 +432,12 @@ def render_game(state: State, surface: pygame.surface.Surface) -> None:
     else:
         picture = rescale_image_relative_to_surface_width(picture, 0.4, surface)
 
-    picture_xy = (position.get_width() + 60, 10)
+    picture_xy = (position.get_width() + 3 * onepw, oneph)
     surface.blit(picture, picture_xy)
 
-    font_large = pygame.font.Font(PACKAGE_DIR / "media/freesansbold.ttf", 64)
+    font_large = pygame.font.Font(PACKAGE_DIR / "media/freesansbold.ttf", 5 * oneph)
     score = font_large.render(f"Score: {state.score}", True, (255, 255, 255))
-    score_xy = (position.get_width() + 60, picture.get_height() + 60)
+    score_xy = (position.get_width() + 3 * onepw, picture.get_height() + 3 * oneph)
     surface.blit(score, score_xy)
 
     game_time_fraction = state.game_time / (state.game_end - state.game_start)
@@ -449,14 +455,14 @@ def render_game(state: State, surface: pygame.surface.Surface) -> None:
     hourglass = load_image_or_retrieve_from_cache(hourglass_pth)
     hourglass = rescale_image_relative_to_surface_width(hourglass, 0.3, surface)
 
-    hourglass_xy = (picture_xy[0] + picture.get_width() + 10, picture_xy[1])
+    hourglass_xy = (picture_xy[0] + picture.get_width() + onepw, picture_xy[1])
     surface.blit(hourglass, hourglass_xy)
 
-    font_small = pygame.font.Font(PACKAGE_DIR / "media/freesansbold.ttf", 16)
+    font_small = pygame.font.Font(PACKAGE_DIR / "media/freesansbold.ttf", 2 * oneph)
     escape = font_small.render('Press ESC or "q" to quit', True, (255, 255, 255))
     surface.blit(
         escape,
-        (10, surface.get_height() - escape.get_height() - 20),
+        (onepw, surface.get_height() - escape.get_height() - 2 * oneph),
     )
 
 
